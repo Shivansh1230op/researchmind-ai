@@ -1,0 +1,16 @@
+# Runtime dependencies for the API and document worker.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+pydantic-settings==2.7.0
+SQLAlchemy==2.0.36
+alembic>=1.14,<2
+openai==1.59.7
+sentence-transformers==3.3.1
+chromadb==0.5.23
+PyMuPDF==1.25.2
+python-docx==1.1.2
+numpy==2.2.1
+requests==2.32.3
+python-dotenv==1.0.1

@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ──────────────────────────────────────────────────────────────
+   ResearchMind AI — Neural Research Laboratory Design System
+   ────────────────────────────────────────────────────────────── */
+
+@layer base {
+  :root {
+    /* Background layers */
+    --bg-base: #050614;
+    --bg-surface: #0c0f26;
+    --bg-elevated: #121633;
+    --bg-glass: rgba(18, 22, 51, 0.6);
+
+    /* Text */
+    --text-primary: #e8eaf0;
+    --text-secondary: #8a91aa;
+    --text-tertiary: #565d78;
+
+    /* Borders */
+    --border-subtle: rgba(138, 145, 170, 0.12);
+    --border-glow: rgba(34, 211, 238, 0.25);
+    --border-strong: rgba(138, 145, 170, 0.25);
+
+    /* Accents */
+    --accent-cyan: #22d3ee;
+    --accent-blue: #3b82f6;
+    --accent-violet: #8b5cf6;
+    --accent-emerald: #10b981;
+
+    /* Gradients */
+    --gradient-neural: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #22d3ee 100%);
+    --gradient-text: linear-gradient(135deg, #22d3ee 0%, #3b82f6 50%, #8b5cf6 100%);
+
+    /* Shadows / Glows */
+    --glow-cyan: 0 0 40px rgba(34, 211, 238, 0.15);
+    --glow-blue: 0 0 40px rgba(59, 130, 246, 0.15);
+    --glow-violet: 0 0 40px rgba(139, 92, 246, 0.15);
+
+    /* Spacing */
+    --max-content: 1280px;
+  }
+
+  * {
+    box-sizing: border-box;
+    border-color: var(--border-subtle);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-inter), system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-surface);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-cyan);
+  }
+
+  /* Selection */
+  ::selection {
+    background: rgba(34, 211, 238, 0.2);
+    color: #fff;
+  }
+
+  /* Focus */
+  :focus-visible {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Glass panel — frosted glass effect */
+  .glass {
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .glass-hover {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .glass-hover:hover {
+    border-color: var(--border-glow);
+    box-shadow: var(--glow-cyan);
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Neural grid background pattern */
+  .grid-pattern {
+    background-image:
+      linear-gradient(rgba(138, 145, 170, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(138, 145, 170, 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* Dot grid pattern */
+  .dot-pattern {
+    background-image: radial-gradient(rgba(138, 145, 170, 0.1) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Glow button */
+  .btn-glow {
+    position: relative;
+    background: var(--gradient-neural);
+    color: white;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+  }
+  .btn-glow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+  }
+  .btn-glow:active {
+    transform: translateY(0);
+  }
+
+  /* Status indicator */
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-emerald);
+    box-shadow: 0 0 12px var(--accent-emerald);
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+
+  /* Neural connection line */
+  .neural-line {
+    stroke: var(--accent-cyan);
+    stroke-width: 1;
+    opacity: 0.15;
+    fill: none;
+  }
+
+  /* Animated gradient border */
+  .gradient-border {
+    position: relative;
+    background: var(--bg-surface);
+    border-radius: 12px;
+  }
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, var(--accent-cyan), transparent, var(--accent-violet));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+  }
+  .gradient-border:hover::before {
+    opacity: 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .bg-radial-glow {
+    background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

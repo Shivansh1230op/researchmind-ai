@@ -1,0 +1,13 @@
+# Build the Next.js app, rather than the Python project at the repository root.
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_PUBLIC_API_URL = "/api"
+
+# Set API_PROXY_URL to your hosted Python backend's HTTPS origin in Netlify's
+# environment variables before building. Never use localhost for a live site.
+# Netlify automatically installs its Next.js adapter; no SPA fallback is needed.

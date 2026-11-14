@@ -1,0 +1,75 @@
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+/lib/
+/lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ── Virtual Environments ─────────────────────────────────────
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# ── Environment Variables ────────────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+!.env.production.example
+
+# ── Data (runtime artifacts, not source) ────────────────────
+data/uploads/*
+!data/uploads/.gitkeep
+data/chroma_db/*
+!data/chroma_db/.gitkeep
+data/documind.db
+data/documind.db-journal
+
+# ── IDE ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Testing ──────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+coverage.xml
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.next-playwright/
+web/test-results/
+web/playwright-report/
+node_modules/
+.researchmind-logs/
+.next/
+.next-*/
+*.tsbuildinfo
+.streamlit/credentials.toml
+data/*.db
+data/*.db-*
