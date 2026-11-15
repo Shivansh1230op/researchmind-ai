@@ -59,6 +59,8 @@ class EmbeddingService:
     @property
     def dimension(self) -> int:
         """Return the embedding dimension (loads model if not loaded)."""
+        if get_settings().embedding_backend == "gemini":
+            return get_settings().remote_embedding_dimension
         if self._dimension is None:
             _ = self.model  # Trigger lazy load
         return self._dimension  # type: ignore
@@ -74,6 +76,8 @@ class EmbeddingService:
         """
         if not texts:
             return []
+        if get_settings().embedding_backend == "gemini":
+            return self._remote_embeddings(texts, "RETRIEVAL_DOCUMENT")
 
         # Filter out empty strings (replace with single space)
         clean_texts = [t if t.strip() else " " for t in texts]
@@ -108,6 +112,8 @@ class EmbeddingService:
             dim = self.dimension
             return [0.0] * dim
 
+        if get_settings().embedding_backend == "gemini":
+            return self._remote_embeddings([text], "RETRIEVAL_QUERY")[0]
         embeddings = self.embed_texts([text])
         return embeddings[0] if embeddings else [0.0] * self.dimension
 
@@ -140,4 +146,37 @@ class EmbeddingService:
 
     def is_model_loaded(self) -> bool:
         """Check whether the embedding model has been loaded into memory."""
-        return self._model is not None
+        return get_settings().embedding_backend == "gemini" or self._model is not None
+
+    def _remote_embeddings(self, texts, task):
+        """API embeddings keep PyTorch and downloaded weights out of Functions."""
+        import re
+        import requests
+        settings = get_settings()
+        model = settings.remote_embedding_model
+        if not re.fullmatch(r"[a-zA-Z0-9._-]+", model):
+            raise ValueError("Invalid remote embedding model")
+        key = settings.embedding_api_key or settings.openai_api_key
+        if not key:
+            raise ValueError("Embedding API key is missing")
+        result = []
+        for start in range(0, len(texts), min(self.batch_size, 100)):
+            batch = texts[start:start + min(self.batch_size, 100)]
+            response = requests.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:batchEmbedContents",
+                headers={"x-goog-api-key": key}, timeout=(10, 90),
+                json={"requests": [{"model": f"models/{model}",
+                    "content": {"parts": [{"text": value if value.strip() else " "}]},
+                    "taskType": task, "outputDimensionality": settings.remote_embedding_dimension}
+                    for value in batch]})
+            if response.status_code != 200:
+                raise RuntimeError(f"Embedding provider returned HTTP {response.status_code}")
+            vectors = response.json().get("embeddings", [])
+            if len(vectors) != len(batch):
+                raise RuntimeError("Embedding provider returned an incomplete batch")
+            for item in vectors:
+                vector = np.asarray(item["values"], dtype=float)
+                if len(vector) != self.dimension or not np.isfinite(vector).all() or not np.linalg.norm(vector):
+                    raise RuntimeError("Embedding provider returned an invalid vector")
+                result.append((vector / np.linalg.norm(vector)).tolist())
+        return result

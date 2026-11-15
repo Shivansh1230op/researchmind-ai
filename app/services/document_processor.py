@@ -22,7 +22,7 @@ from typing import Dict, Optional
 from app.core.config import get_settings
 from app.core.logging_config import get_logger
 from app.database.database import get_db_context
-from app.database.models import Document, DocumentAccess, DocumentProcessingJob
+from app.database.models import Document, DocumentAccess, DocumentProcessingJob, ChatMessage
 from app.services.document_loader import DocumentLoader
 from app.services.text_splitter import TextSplitter
 from app.services.embedding_service import EmbeddingService
@@ -90,7 +90,9 @@ class DocumentProcessor:
             # Step 1: Extract text with page-level metadata
             if on_stage:
                 on_stage("extracting")
-            pages, doc_metadata = self.loader.load_document(file_path, file_type)
+            from app.services.source_storage import local_source
+            with local_source(file_path, file_type) as local_path:
+                pages, doc_metadata = self.loader.load_document(local_path, file_type)
 
             # Update document record with metadata
             self._update_document(
@@ -208,6 +210,13 @@ class DocumentProcessor:
                 db.commit()
 
     def delete_document(self, document_id: str) -> bool:
+        if get_settings().processing_backend == "vercel_queue":
+            from app.services.cloud_jobs import document_lock
+            with document_lock(document_id):
+                return self._delete_document(document_id)
+        return self._delete_document(document_id)
+
+    def _delete_document(self, document_id: str) -> bool:
         """Delete a document: remove from ChromaDB, DB, and disk.
 
         Args:
@@ -232,16 +241,15 @@ class DocumentProcessor:
             logger.info(f"Deleted {deleted_chunks} chunks from vector store")
 
             # Delete file from disk
-            if file_path and os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                    logger.info(f"Deleted file from disk: {file_path}")
-                except Exception as exc:
-                    logger.warning(f"Failed to delete file from disk: {exc}")
+            if file_path:
+                from app.services.source_storage import delete_source
+                delete_source(file_path)
 
             # Delete from database
             db.query(DocumentProcessingJob).filter_by(document_id=document_id).delete()
             db.query(DocumentAccess).filter_by(document_id=document_id).delete()
+            # Preserve the conversation when the original source is deleted.
+            db.query(ChatMessage).filter_by(document_id=document_id).update({"document_id": None})
             db.delete(doc)
             db.commit()
 

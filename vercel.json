@@ -1,0 +1,30 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "website": {
+      "root": "web",
+      "framework": "nextjs",
+      "functions": {
+        "src/app/api/queue/process/route.ts": {
+          "experimentalTriggers": [{ "type": "queue/v2beta", "topic": "researchmind-documents", "maxDeliveries": 3, "retryAfterSeconds": 60 }]
+        }
+      },
+      "bindings": [
+        { "type": "service", "service": "backend", "format": "url", "env": "RESEARCHMIND_BACKEND_URL" }
+      ]
+    },
+    "backend": {
+      "root": ".",
+      "framework": "fastapi",
+      "entrypoint": "index:app",
+      "functions": {
+        "**/*.py": { "maxDuration": 300, "regions": ["sin1"], "excludeFiles": "{web/**,frontend/**,venv/**,.venv/**,data/**,tests/**,docs/**,dist/**,.env,.env.*,.git/**,.researchmind-logs/**}" }
+      }
+    }
+  },
+  "rewrites": [
+    { "source": "/api/blob-upload", "destination": { "service": "website" } },
+    { "source": "/api/(.*)", "destination": { "service": "backend" } },
+    { "source": "/(.*)", "destination": { "service": "website" } }
+  ]
+}

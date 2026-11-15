@@ -33,6 +33,15 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     processing_worker_enabled: bool = True
     preload_embeddings: bool = True
+    # Cloud adapters are opt-in; local development retains its existing stores.
+    storage_backend: str = "local"
+    vector_backend: str = "chroma"
+    processing_backend: str = "local"
+    embedding_backend: str = "local"
+    remote_embedding_model: str = "gemini-embedding-001"
+    remote_embedding_dimension: int = Field(default=768, ge=128, le=3072)
+    embedding_api_key: str = ""
+    internal_worker_secret: str = ""
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_username: str = ""
@@ -82,6 +91,7 @@ class Settings(BaseSettings):
 
     # ── Database ─────────────────────────────────────────────────
     database_url: str = "sqlite:///data/documind.db"
+    database_url_unpooled: str = ""
 
     # ── Rate Limiting ────────────────────────────────────────────
     rate_limit_requests: int = 60

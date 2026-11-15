@@ -165,9 +165,8 @@ async def upload_document(request: Request, response: Response, file: UploadFile
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
     # Save file to disk
-    save_path = os.path.join(settings.upload_dir, f"{uuid.uuid4().hex}.{file_type}")
-    with open(save_path, "wb") as f:
-        f.write(content)
+    from app.services.source_storage import save_source
+    save_path = await run_in_threadpool(save_source, content, file_type)
 
     logger.info(f"File saved: {save_path} ({file_size} bytes)")
 
@@ -181,6 +180,12 @@ async def upload_document(request: Request, response: Response, file: UploadFile
         db.add(DocumentAccess(document_id=document.id, user_id=user, workspace_id=owner_workspace))
         enqueue(db, document.id)
         db.commit()
+        if settings.processing_backend == "vercel_queue":
+            from app.services.cloud_jobs import dispatch
+            try:
+                await dispatch(document.id)
+            except Exception:
+                raise HTTPException(503, "Upload saved. Retry processing from your library.") from None
         response.status_code = 202
         return DocumentMetadata.model_validate(document)
 

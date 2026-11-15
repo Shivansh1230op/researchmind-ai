@@ -4,6 +4,8 @@ The existing `app/` FastAPI backend and `web/` Next.js client are retained to av
 
 ## Implemented
 
+- Full application deployment on Vercel Services, with PostgreSQL/pgvector, Gemini embeddings, private Blob uploads and a private queue consumer. The [live deployment guide](VERCEL_DEPLOYMENT.md) records the production URL, successful live checks and verification limits.
+
 - Account registration, scrypt password hashing, HttpOnly cookies, server-side revocation, login/logout, origin checking and protected dashboard.
 - User-owned workspaces, workspace-scoped document listing, retrieval, reports and conversations. Original source URLs enforce document ownership even without a workspace header.
 - PDF/DOCX/TXT/Markdown ingestion with bounded reads, randomized storage names, signature/archive checks, text extraction, page metadata, chunking, local embeddings and persistent ChromaDB.
@@ -23,14 +25,14 @@ The existing `app/` FastAPI backend and `web/` Next.js client are retained to av
 
 ## Architectural choices
 
-SQLAlchemy with SQLite and ChromaDB provides a lightweight single-server development configuration. PostgreSQL can store relational metadata with a driver, but pgvector is not implemented. Retrieval combines vector candidates with keyword rescoring and an optional cross-encoder; it does not implement independent corpus-wide BM25 or HyDE. Canvas and CSS supply ambient graphics without a Three.js dependency. Native React state and fetch keep the existing frontend dependency footprint small. These are deliberate substitutions, not claims that every requested library is used.
+SQLAlchemy with SQLite and ChromaDB provides a lightweight single-server development configuration. The Vercel deployment uses PostgreSQL for metadata and vectors, pgvector cosine ranking, Gemini embeddings and private Vercel Blob storage. Retrieval combines vector candidates with keyword rescoring and, locally, an optional cross-encoder; it does not implement independent corpus-wide BM25 or HyDE. Canvas and CSS supply ambient graphics without a Three.js dependency. Native React state and fetch keep the existing frontend dependency footprint small. These are deliberate substitutions, not claims that every requested library is used.
 
 ## Remaining limitations
 
 This is a functional development implementation, not a verified production SaaS. The following requested capabilities need additional work:
 
 - New signup uses expiring email OTP verification with TLS-protected SMTP delivery, resend limits and hashed codes. SMTP credentials must be configured before real signup can send email. Password reset delivery is not implemented.
-- The web client submits background uploads (`?background=true`) to a persistent SQL queue and polls recorded stages. The worker supports one API process; do not run multiple API workers against this queue. Distributed Celery/Redis execution and resumable uploads are not included. The synchronous upload API remains available for compatibility.
+- The local web client submits background uploads (`?background=true`) to a persistent SQL queue and polls recorded stages. Its worker supports one API process. On Vercel, direct private Blob uploads feed Vercel Queues and a secured Python processing callback; database locks coordinate concurrent deliveries. Celery/Redis execution is not included. The synchronous upload API remains available for compatibility.
 - Scanned PDF OCR is not included. Preprocess scans using OCR before uploading. DOCX/TXT/Markdown have logical text blocks rather than reliable printed page numbers.
 - Summarization supports short, detailed, executive, bullet, academic, chapter/section, key-findings, beginner and definitions styles. Length controls set prompt targets and token budgets; they do not guarantee an exact word count. Batch output summarizes each selected document separately.
 - Citation checks validate source-label bounds and preserve retrieved passage provenance. They cannot verify that every generated claim is supported; human source verification remains necessary. Retrieved source cards are evidence candidates, not a guarantee of model correctness.
@@ -44,7 +46,7 @@ This is a functional development implementation, not a verified production SaaS.
 
 ## Deployment boundary
 
-The Next.js proxy and Python service should sit behind the same HTTPS origin. Set `COOKIE_SECURE=true` and configure `CORS_ORIGINS` with that origin. Do not expose the API with wildcard credentialed CORS. Keep the local SQLite/Chroma files on a persistent volume and back them up together. Vercel can host the frontend; Python ingestion and model execution need a separate long-running host.
+The Next.js frontend and Python service share one HTTPS origin. On Vercel, Services routes requests to the appropriate service and private storage preserves data across deployments. The Vercel entrypoint sets secure cookies and allowed deployment origins. For local/Docker hosting, use a same-origin proxy, configure `COOKIE_SECURE` and `CORS_ORIGINS`, and keep SQLite/Chroma files on a persistent volume. See [Vercel deployment](VERCEL_DEPLOYMENT.md) for the full cloud architecture.
 
 Provider compatibility reference: https://docs.ollama.com/api/openai-compatibility
 

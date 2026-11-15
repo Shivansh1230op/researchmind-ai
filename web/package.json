@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@vercel/blob": "^2.9.0",
+    "@vercel/queue": "^0.11.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.4.2",
     "lucide-react": "^0.474.0",
@@ -35,6 +37,12 @@
     "typescript": "^5.7.3"
   },
   "overrides": {
+    "@vercel/queue": {
+      "minimatch": "^11.0.1"
+    },
+    "@vercel/cli-config": {
+      "zod": "^4.6.6"
+    },
     "postcss": "^8.5.23",
     "postcss-selector-parser": "^6.1.5"
   }

@@ -52,6 +52,10 @@ class VectorStore:
     def collection(self):
         """Get or create the ChromaDB collection."""
         if self._collection is None:
+            if get_settings().vector_backend == "postgres":
+                from app.services.postgres_vectors import PostgresCollection
+                self._collection = PostgresCollection(self.collection_name)
+                return self._collection
             logger.info(f"Getting/creating collection: {self.collection_name}")
             self._collection = self.client.get_or_create_collection(
                 name=self.collection_name,
@@ -246,6 +250,9 @@ class VectorStore:
     def reset(self) -> None:
         """Delete the entire collection and recreate it (for testing/dev)."""
         try:
+            if get_settings().vector_backend == "postgres":
+                self.collection.delete()
+                return
             self.client.delete_collection(self.collection_name)
             self._collection = None  # Force re-creation
             _ = self.collection  # Recreate

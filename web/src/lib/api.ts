@@ -83,6 +83,20 @@ export async function fetchAPI<T>(path: string, options?: RequestInit): Promise<
   return res.json();
 }
 
+async function uploadCloudDocument(file: File, onProgress?: (pct: number) => void): Promise<DocumentMeta> {
+  const ticket = await fetchAPI<{ id: string; pathname: string }>("/documents/uploads", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: file.name, file_size: file.size }),
+  });
+  const { upload } = await import("@vercel/blob/client");
+  await upload(ticket.pathname, file, {
+    access: "private", handleUploadUrl: "/api/blob-upload", multipart: true,
+    clientPayload: JSON.stringify({ ticket_id: ticket.id, workspace_id: workspaceHeaders()["X-Workspace-Id"] }),
+    onUploadProgress: ({ percentage }) => onProgress?.(Math.round(percentage)),
+  });
+  return fetchAPI<DocumentMeta>(`/documents/uploads/${ticket.id}/complete`, { method: "POST" });
+}
+
 export const api = {
   // ── Health ───────────────────────────────────────────────────
   health: () => fetchAPI<HealthStatus>("/health"),
@@ -92,7 +106,9 @@ export const api = {
     fetchAPI<{ documents: DocumentMeta[]; total: number }>("/documents"),
 
   uploadDocument: (file: File, onProgress?: (pct: number) => void) =>
-    new Promise<DocumentMeta>((resolve, reject) => {
+    process.env.NEXT_PUBLIC_STORAGE_BACKEND === "vercel_blob"
+    ? uploadCloudDocument(file, onProgress)
+    : new Promise<DocumentMeta>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const formData = new FormData();
       formData.append("file", file);

@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, Index
-from sqlalchemy.dialects.sqlite import JSON  # works on PostgreSQL too
+from sqlalchemy import JSON
 from sqlalchemy.orm import relationship
 
 from app.database.database import Base
@@ -73,6 +73,30 @@ class DocumentProcessingJob(Base):
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+class StoredChunk(Base):
+    """Durable cloud vectors; PostgreSQL pgvector performs cosine ranking."""
+    __tablename__ = "stored_chunks"
+    id = Column(String, primary_key=True)
+    collection = Column(String(150), nullable=False, index=True)
+    document_id = Column(String, ForeignKey("documents.id"), nullable=False, index=True)
+    content = Column(Text, nullable=False)
+    metadata_json = Column(JSON, nullable=False)
+    embedding = Column(JSON, nullable=False)
+    embedding_model = Column(String(200), nullable=False)
+
+
+class UploadTicket(Base):
+    __tablename__ = "upload_tickets"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, nullable=False, index=True)
+    workspace_id = Column(String, nullable=False)
+    filename = Column(String(240), nullable=False)
+    pathname = Column(String(500), nullable=False, unique=True)
+    file_size = Column(Integer, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    document_id = Column(String, nullable=True)
 
 
 class ConversationPreferences(Base):

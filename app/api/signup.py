@@ -37,6 +37,11 @@ def request_signup(body, db):
 
 def _request_signup(body, db):
     email = body.email.strip().lower()
+    if db.bind.dialect.name == "postgresql":
+        import hashlib
+        from sqlalchemy import text
+        lock_key = int.from_bytes(hashlib.sha256(email.encode()).digest()[:8], "big", signed=True)
+        db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
     if not re.fullmatch(r"[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+", email) or len(email) > 254:
         raise HTTPException(422, "Enter a valid email address.")
     if not body.name.strip():

@@ -9,7 +9,8 @@ own session and it is automatically closed when the request finishes.
 from contextlib import contextmanager
 from typing import Generator
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
 
 from app.core.config import get_settings
@@ -23,11 +24,16 @@ settings = get_settings()
 # a thread pool for synchronous endpoints.
 connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
 
+database_url = settings.database_url
+if database_url.startswith(("postgres://", "postgresql://")):
+    database_url = "postgresql+psycopg://" + database_url.split("://", 1)[1]
+
 engine = create_engine(
-    settings.database_url,
+    database_url,
     connect_args=connect_args,
     pool_pre_ping=True,
     echo=settings.debug,
+    **({"poolclass": NullPool} if database_url.startswith("postgresql") else {}),
 )
 
 # Enable WAL mode for SQLite for better concurrent read performance
@@ -54,7 +60,15 @@ def init_db() -> None:
     # Import models so they are registered on Base.metadata
     from app.database import models  # noqa: F401
 
-    Base.metadata.create_all(bind=engine)
+    if engine.dialect.name == "postgresql":
+        # Cold starts can initialize concurrently. Serialize additive DDL.
+        with engine.begin() as connection:
+            connection.execute(text("SELECT pg_advisory_xact_lock(724119601)"))
+            if settings.vector_backend == "postgres":
+                connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            Base.metadata.create_all(bind=connection)
+    else:
+        Base.metadata.create_all(bind=engine)
     logger.info("Database tables created/verified")
 
 

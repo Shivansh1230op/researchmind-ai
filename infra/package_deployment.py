@@ -10,6 +10,7 @@ FILES = {
     "requirements.txt", "requirements-server.txt", "alembic.ini", "pytest.ini",
     "README.md", "ARCHITECTURE.md", ".gitignore", ".dockerignore",
     ".env.example", ".env.production.example",
+    "pyproject.toml", "uv.lock", "vercel.json", ".vercelignore", "index.py", ".env.vercel.example",
 }
 SKIP = {"node_modules", "__pycache__", ".pytest_cache", "test-results", "playwright-report", "screenshots"}
 

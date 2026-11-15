@@ -26,6 +26,8 @@ from app.api.routes import router
 from app.api.workspace import router as workspace_router
 from app.api.stream import router as stream_router
 from app.api.signup import router as signup_router
+from app.api.cloud_uploads import router as cloud_uploads_router
+from app.api.queue_internal import router as queue_internal_router
 from app.database.database import init_db
 
 logger = get_logger(__name__)
@@ -180,7 +182,16 @@ app.include_router(router, tags=["ResearchMind API"])
 app.include_router(workspace_router, tags=["Workspace API"])
 app.include_router(stream_router, tags=["Streaming API"])
 app.include_router(signup_router, tags=["Signup verification"])
+app.include_router(cloud_uploads_router, tags=["Cloud uploads"])
+app.include_router(queue_internal_router)
 app.include_router(signup_router, prefix="/api/v1", include_in_schema=False)
+if settings.processing_backend == "vercel_queue":
+    app.include_router(cloud_uploads_router, prefix="/api", include_in_schema=False)
+    # Service routing preserves /api, unlike the development Next.js proxy.
+    app.include_router(signup_router, prefix="/api", include_in_schema=False)
+    app.include_router(stream_router, prefix="/api", include_in_schema=False)
+    app.include_router(router, prefix="/api", include_in_schema=False)
+    app.include_router(workspace_router, prefix="/api", include_in_schema=False)
 app.include_router(stream_router, prefix="/api/v1", include_in_schema=False)
 app.include_router(router, prefix="/api/v1", include_in_schema=False)
 app.include_router(workspace_router, prefix="/api/v1", include_in_schema=False)
@@ -194,6 +205,10 @@ def ready():
     with engine.connect() as connection:
         connection.execute(text("SELECT 1"))
     return {"status": "ready"}
+
+
+if settings.processing_backend == "vercel_queue":
+    app.add_api_route("/api/ready", ready, methods=["GET"], include_in_schema=False)
 
 # Root endpoint
 @app.get("/", tags=["Root"])

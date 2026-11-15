@@ -138,13 +138,19 @@ def rename_document(id: str, body: RenameDocument, request: Request, user: str =
 
 
 @router.post("/documents/{id}/reprocess", status_code=202)
-def reprocess_document(id: str, request: Request, user: str = Depends(current_user), db: Session = Depends(get_db)):
+async def reprocess_document(id: str, request: Request, user: str = Depends(current_user), db: Session = Depends(get_db)):
     from app.services.processing_jobs import enqueue
     doc = require_document(id, request, user, db)
     if doc.status != "error":
         raise HTTPException(409, "Only failed documents can be reprocessed.")
     enqueue(db, id)
     db.commit()
+    if get_settings().processing_backend == "vercel_queue":
+        from app.services.cloud_jobs import dispatch
+        try:
+            await dispatch(id)
+        except Exception:
+            raise HTTPException(503, "Could not schedule processing. Please retry shortly.") from None
     return {"id": id, "status": doc.status}
 
 
@@ -220,6 +226,17 @@ def preview(id: str, request: Request, user: str = Depends(current_user), db: Se
 def source_file(id: str, request: Request, user: str = Depends(current_user), db: Session = Depends(get_db)):
     from pathlib import Path
     doc = require_owned_document(id, user, db)
+    from app.services.source_storage import is_blob, blob_client
+    if is_blob(doc.file_path):
+        from urllib.parse import quote
+        def content():
+            with blob_client().stream_blob(doc.file_path[5:], access="private") as download:
+                yield from download
+        media = "application/pdf" if doc.file_type == "pdf" else "application/octet-stream"
+        disposition = "inline" if doc.file_type == "pdf" else "attachment"
+        return StreamingResponse(content(), media_type=media, headers={
+            "Content-Disposition": f"{disposition}; filename*=UTF-8''{quote(doc.filename, safe='')}",
+            "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
     path = Path(doc.file_path).resolve()
     if not path.is_relative_to(Path(get_settings().upload_dir).resolve()) or not path.is_file():
         raise HTTPException(404, "Source file unavailable.")

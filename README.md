@@ -1,6 +1,10 @@
 # ResearchMind AI
 
-A document research workspace built with Next.js, FastAPI, local Sentence Transformers embeddings and ChromaDB. Upload source material, ask questions with streamed answers, inspect retrieved passages, compare papers, explore document similarity and export editable research reports.
+**Live app: [researchmind-ai-five.vercel.app](https://researchmind-ai-five.vercel.app)**
+
+[Vercel deployment guide](docs/VERCEL_DEPLOYMENT.md)
+
+A document research workspace built with Next.js and FastAPI. Upload source material, ask questions with streamed answers, inspect retrieved passages, compare papers, explore document similarity and export editable research reports. The live deployment uses PostgreSQL/pgvector, Gemini embeddings, private Vercel Blob storage and Vercel Queues. Local development also supports Sentence Transformers and ChromaDB.
 
 ![ResearchMind overview](docs/screenshots/overview.png)
 
@@ -12,7 +16,7 @@ Screenshots show the implemented interface with an isolated empty test workspace
 - Professional signup with emailed six-digit verification codes. Account creation requires successful verification; configure the sender using [Email setup](docs/EMAIL_SETUP.md).
 - User-owned research workspaces and authorization on private document, retrieval, conversation, report and source-file APIs.
 - PDF, DOCX, TXT and Markdown uploads, extraction, page-aware chunking, embeddings and persistent vector indexing.
-- Background upload queue with database-recorded processing stages, restart recovery and retry. Run one API process for the built-in queue.
+- Background uploads with database-recorded processing stages and retry: Vercel Queues in the cloud, or the built-in single-process worker locally.
 - Vector retrieval with keyword rescoring, optional cross-encoder reranking, bounded context and conversation memory.
 - Actual OpenAI-compatible/Ollama token streaming through SSE. Explicit provider failures, never demo answers.
 - Quick, deep, compare, beginner, critical and summary chat modes that change backend instructions and retrieval behavior.
@@ -23,23 +27,24 @@ Screenshots show the implemented interface with an isolated empty test workspace
 - Markdown, paginated PDF and DOCX report downloads with references taken from retrieved sources.
 - Responsive layouts, mobile research panels, keyboard search, dark/light themes and reduced-motion support.
 
-This is a development implementation. The complete list of architectural choices and unfinished capabilities is in [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md). In particular, OCR, password recovery, distributed jobs, full bibliographic validation and exhaustive literature synthesis are not implemented. Citation labels and source provenance are checked; factual correctness still needs human review.
+The complete list of architectural choices and unfinished capabilities is in [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md). In particular, OCR, password recovery, full bibliographic validation and exhaustive literature synthesis are not implemented. Citation labels and source provenance are checked; factual correctness still needs human review. See the [deployment guide](docs/VERCEL_DEPLOYMENT.md) for the live checks and remaining verification limits.
 
 ## Stack and architecture
 
 | Layer | Implementation |
 | --- | --- |
 | Web | Next.js App Router, React, TypeScript, Tailwind, Framer Motion, Lucide, safe React Markdown |
-| API | Python 3.11+, FastAPI, Pydantic, SSE |
-| Relational persistence | SQLAlchemy, SQLite by default, additive Alembic migration |
-| Retrieval | ChromaDB, Sentence Transformers, keyword rescoring, optional cross-encoder |
+| API | FastAPI, Pydantic, SSE; Python 3.12 on Vercel, Python 3.11+ locally |
+| Relational persistence | SQLAlchemy, PostgreSQL on Vercel or SQLite locally, additive Alembic migrations |
+| Retrieval | PostgreSQL/pgvector and Gemini embeddings in the cloud; ChromaDB and Sentence Transformers locally; keyword rescoring |
+| Files and jobs | Private Vercel Blob and Vercel Queues in the cloud; local files and a single-process worker locally |
 | Generation | OpenAI-compatible API, Ollama, existing Gemini/Hugging Face integrations |
 | Parsing and export | PyMuPDF, python-docx, plain text/Markdown |
 | Validation | Pytest, Playwright, TypeScript, production build, GitHub Actions |
 
 ```text
 Next.js web UI → same-origin /api proxy → FastAPI
-  Upload → validate → extract → chunk → embed → ChromaDB
+  Upload → validate → extract → chunk → embed → vector store
   Question → scoped retrieval → bounded context → provider stream → source cards
   Users / workspaces / document ownership / conversations / reports → SQLAlchemy
 ```
@@ -112,7 +117,7 @@ For paid APIs, choose `LLM_BACKEND=openai`, a valid `OPENAI_MODEL` and your serv
 
 `alembic upgrade head` creates new tables while preserving existing metadata. Application startup also creates missing tables for development convenience. The initial migration is additive; it refuses destructive downgrade. Back up `data/` before changes. Legacy documents are not automatically granted to new accounts: re-upload them into an owned workspace.
 
-PostgreSQL metadata storage requires installing its SQLAlchemy driver and setting `DATABASE_URL`; Chroma remains the vector store. PostgreSQL deployment is not verified here, and pgvector is not implemented. Do not change embedding dimensions in an existing Chroma collection: use a new collection and reprocess files.
+The Vercel deployment stores metadata and vectors in PostgreSQL and ranks vectors with pgvector. It uses a pooled `DATABASE_URL` for ordinary queries and `DATABASE_URL_UNPOOLED` for processing locks; both are supplied by the connected database. Local development defaults to SQLite and ChromaDB. Existing local accounts and indexes are not transferred automatically. Do not change embedding dimensions in an existing collection: create a new collection and reprocess files. See the [Vercel guide](docs/VERCEL_DEPLOYMENT.md) for cloud setup and verification.
 
 ## Testing
 
@@ -130,6 +135,13 @@ The API workflow test covers registration → workspace → Markdown upload → 
 
 ## Docker and deployment
 
+**Deploy the full app on Vercel:** follow [the Vercel deployment guide](docs/VERCEL_DEPLOYMENT.md).
+The root `vercel.json` runs Next.js and FastAPI as Vercel Services on one domain,
+with private Blob documents, connected PostgreSQL storage and Vercel Queue jobs.
+Import the repository root, not just `web/`, and configure `.env.vercel.example`
+values in Vercel's private environment settings. Local indexes and accounts are
+not transferred automatically.
+
 **Deploy the complete app as one service:** use the root Dockerfile with the included [Render Blueprint](render.yaml) or [Railway config](railway.json). The website and private Python API share one public URL. Follow [the deployment guide](docs/DEPLOYMENT.md) for private credentials, persistent storage, and the deployment steps. An empty production environment template is included in `.env.production.example`.
 
 For Netlify, use the root `netlify.toml` and follow [the Netlify deployment guide](docs/NETLIFY_DEPLOYMENT.md). The frontend builds from `web/`; set its build-time `API_PROXY_URL` to a separately hosted Python backend's HTTPS origin.
@@ -140,7 +152,13 @@ docker compose up --build
 
 The web service is available at http://localhost:3000 and API docs at http://localhost:8000/docs. Compose mounts `data/` and a model cache volume. When using local Ollama, the backend container connects through `host.docker.internal`; the host service must be reachable from containers. Containers have not been executed as part of this implementation.
 
-Deploy Next.js and the long-running Python backend separately, or together behind one HTTPS reverse proxy. Vercel alone does not run Python document processing. Build Next.js with `API_PROXY_URL` set to the reachable backend. Use a same-origin `/api` proxy for cookie authentication, `COOKIE_SECURE=true`, restricted `CORS_ORIGINS`, persistent storage, backups, and appropriately limited server access. Add Redis-backed rate limiting and durable jobs before multi-worker scaling. The Next.js image uses [standalone output](https://nextjs.org/docs/app/api-reference/config/next-config-js/output).
+For other hosts, deploy Next.js and the long-running Python backend separately,
+or together behind one HTTPS reverse proxy. Build Next.js with `API_PROXY_URL`
+set to the reachable backend. Use a same-origin `/api` proxy for cookie
+authentication, `COOKIE_SECURE=true`, restricted `CORS_ORIGINS`, persistent storage,
+backups, and appropriately limited server access. Add shared rate limiting and
+coordinated jobs before scaling the local/Docker setup across multiple workers.
+The Next.js image uses [standalone output](https://nextjs.org/docs/app/api-reference/config/next-config-js/output).
 
 ## Troubleshooting
 
