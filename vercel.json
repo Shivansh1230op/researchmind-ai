@@ -18,7 +18,7 @@
       "framework": "fastapi",
       "entrypoint": "index:app",
       "functions": {
-        "**/*.py": { "maxDuration": 300, "regions": ["sin1"], "excludeFiles": "{web/**,frontend/**,venv/**,.venv/**,data/**,tests/**,docs/**,dist/**,.env,.env.*,.git/**,.researchmind-logs/**}" }
+        "**/*.py": { "maxDuration": 300, "regions": ["sin1"], "excludeFiles": "{web/**,venv/**,.venv/**,data/**,tests/**,docs/**,dist/**,.env,.env.*,.git/**,.researchmind-logs/**}" }
       }
     }
   },

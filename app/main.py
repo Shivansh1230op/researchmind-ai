@@ -111,7 +111,7 @@ app = FastAPI(
 
 # ── Middleware ────────────────────────────────────────────────
 
-# CORS: allow the Streamlit frontend (and any other client) to call the API
+# Allow authenticated requests from the configured website origins.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins.split(","),  # In production, restrict to your frontend URL

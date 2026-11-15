@@ -103,7 +103,9 @@ need smaller source files or a larger supported duration on the selected plan.
 
 Local verification on 15 November 2026:
 
-- The non-integration backend suite passed: 122 tests, 28 deselected.
+- The non-integration backend suite passed after repository cleanup: 108 tests,
+  28 deselected. Tests for the retired container supervisor were removed; source
+  packaging privacy checks remain covered by `test_deployment_package.py`.
 - The final nine cloud tests passed on an isolated Python 3.12.13 environment
   using the locked Vercel dependencies, including real route requests against
   the cloud entrypoint without importing PyTorch, Chroma or Sentence Transformers.

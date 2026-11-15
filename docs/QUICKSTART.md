@@ -8,7 +8,7 @@ The document links in chat open source files in your editor; they are not the we
 
 New registrations require an emailed verification code. Configure a sending mailbox using [EMAIL_SETUP.md](EMAIL_SETUP.md). Existing accounts can still sign in; signup cannot send real codes until SMTP is configured.
 
-Keep your existing `.env` and `.streamlit/credentials.toml` private. Never paste keys into frontend files.
+Keep your existing `.env` private. Never paste keys into frontend files.
 
 ## Backend
 

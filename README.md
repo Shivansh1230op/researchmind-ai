@@ -49,7 +49,7 @@ Next.js web UI → same-origin /api proxy → FastAPI
   Users / workspaces / document ownership / conversations / reports → SQLAlchemy
 ```
 
-The existing `app/`, `web/`, `tests/` structure is retained. `frontend/app.py` is the legacy Streamlit interface and does not implement the new cookie login flow; use Next.js for authenticated research. Optional heavyweight frontend libraries, LangChain, Redis and Celery were not introduced just to match a dependency list. [Implementation details](docs/IMPLEMENTATION.md) explain the substitutions.
+The `app/`, `web/` and `tests/` directories contain the backend, Next.js interface and automated checks. [Implementation details](docs/IMPLEMENTATION.md) explain the architecture and remaining limitations.
 
 ## Installation and running locally
 
@@ -77,7 +77,7 @@ Open http://localhost:3000. Register, open your workspace, upload a document, wa
 
 ## Environment and provider configuration
 
-Keep `.env`, `.streamlit/credentials.toml`, uploaded files, databases and model credentials out of version control. No API key is needed in browser code.
+Keep `.env`, uploaded files, databases and model credentials out of version control. No API key is needed in browser code.
 
 | Variable | Purpose |
 | --- | --- |
@@ -95,7 +95,7 @@ Keep `.env`, `.streamlit/credentials.toml`, uploaded files, databases and model 
 | `DATABASE_URL` | Defaults to `sqlite:///data/documind.db` |
 | `CHROMA_PERSIST_DIR` / `UPLOAD_DIR` | Persistent vector and source-file storage |
 | `MAX_FILE_SIZE_MB` | Upload size limit, default 50 MB |
-| `API_PROXY_URL` | Frontend build-time backend proxy target; default `http://127.0.0.1:8000` |
+| `API_PROXY_URL` | Local frontend backend proxy target; default `http://127.0.0.1:8000`. Vercel Services handles production routing. |
 
 For local generation:
 
@@ -133,7 +133,7 @@ npm.cmd test
 
 The API workflow test covers registration → workspace → Markdown upload → extraction/chunking/indexing → retrieval → SSE answer → citation → resumed history → PDF/DOCX export, using real SQL and Chroma with model calls mocked. Security tests check user/workspace boundaries, invalid files, session revocation, cross-origin mutations and safe provider errors. Playwright covers dashboard/search, research controls, mobile panels and login with mocked API responses. Local Playwright uses installed Microsoft Edge; CI installs Chromium. Tests isolate their database and files from your research data.
 
-## Docker and deployment
+## Vercel deployment
 
 **Deploy the full app on Vercel:** follow [the Vercel deployment guide](docs/VERCEL_DEPLOYMENT.md).
 The root `vercel.json` runs Next.js and FastAPI as Vercel Services on one domain,
@@ -141,24 +141,6 @@ with private Blob documents, connected PostgreSQL storage and Vercel Queue jobs.
 Import the repository root, not just `web/`, and configure `.env.vercel.example`
 values in Vercel's private environment settings. Local indexes and accounts are
 not transferred automatically.
-
-**Deploy the complete app as one service:** use the root Dockerfile with the included [Render Blueprint](render.yaml) or [Railway config](railway.json). The website and private Python API share one public URL. Follow [the deployment guide](docs/DEPLOYMENT.md) for private credentials, persistent storage, and the deployment steps. An empty production environment template is included in `.env.production.example`.
-
-For Netlify, use the root `netlify.toml` and follow [the Netlify deployment guide](docs/NETLIFY_DEPLOYMENT.md). The frontend builds from `web/`; set its build-time `API_PROXY_URL` to a separately hosted Python backend's HTTPS origin.
-
-```text
-docker compose up --build
-```
-
-The web service is available at http://localhost:3000 and API docs at http://localhost:8000/docs. Compose mounts `data/` and a model cache volume. When using local Ollama, the backend container connects through `host.docker.internal`; the host service must be reachable from containers. Containers have not been executed as part of this implementation.
-
-For other hosts, deploy Next.js and the long-running Python backend separately,
-or together behind one HTTPS reverse proxy. Build Next.js with `API_PROXY_URL`
-set to the reachable backend. Use a same-origin `/api` proxy for cookie
-authentication, `COOKIE_SECURE=true`, restricted `CORS_ORIGINS`, persistent storage,
-backups, and appropriately limited server access. Add shared rate limiting and
-coordinated jobs before scaling the local/Docker setup across multiple workers.
-The Next.js image uses [standalone output](https://nextjs.org/docs/app/api-reference/config/next-config-js/output).
 
 ## Troubleshooting
 

@@ -1,9 +1,6 @@
 -r requirements-server.txt
 
-# Legacy local interface (the deployed website uses Next.js).
-streamlit==1.41.1
-
-# Development and tests; omitted from the deployment image.
+# Development and test dependencies; Vercel uses pyproject.toml and uv.lock.
 pytest==8.4.0
 pytest-asyncio==0.25.0
 httpx==0.28.1

@@ -35,7 +35,6 @@ venv.bak/
 .env.*.local
 .env.*
 !.env.example
-!.env.production.example
 !.env.vercel.example
 
 # ── Data (runtime artifacts, not source) ────────────────────
@@ -78,5 +77,9 @@ data/*.db-*
 .vercel
 .env*
 !.env.example
-!.env.production.example
 !.env.vercel.example
+
+# Local research data and generated browser captures.
+data/
+docs/screenshots/*
+!docs/screenshots/overview.png

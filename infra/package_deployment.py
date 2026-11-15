@@ -4,12 +4,10 @@ import os
 from zipfile import ZipFile, ZIP_DEFLATED
 
 ROOT = Path(__file__).resolve().parents[1]
-DIRECTORIES = {"app", "web", "infra", "migrations", "tests", "docs", ".github", "frontend"}
+DIRECTORIES = {"app", "web", "infra", "migrations", "tests", "docs", ".github"}
 FILES = {
-    "Dockerfile", "docker-compose.yml", "netlify.toml", "render.yaml", "railway.json",
     "requirements.txt", "requirements-server.txt", "alembic.ini", "pytest.ini",
-    "README.md", "ARCHITECTURE.md", ".gitignore", ".dockerignore",
-    ".env.example", ".env.production.example",
+    "README.md", ".gitignore", ".env.example", "docs/screenshots/overview.png",
     "pyproject.toml", "uv.lock", "vercel.json", ".vercelignore", "index.py", ".env.vercel.example",
 }
 SKIP = {"node_modules", "__pycache__", ".pytest_cache", "test-results", "playwright-report", "screenshots"}
@@ -28,7 +26,7 @@ def source_files():
                 path = Path(directory) / item
                 if path.is_symlink() or item.endswith((".pyc", ".tsbuildinfo")):
                     continue
-                if item.startswith(".env") and item not in {".env.example", ".env.production.example"}:
+                if item.startswith(".env") and item not in {".env.example", ".env.vercel.example"}:
                     continue
                 yield path
 

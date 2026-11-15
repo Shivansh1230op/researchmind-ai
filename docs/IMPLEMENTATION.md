@@ -1,6 +1,6 @@
 # ResearchMind implementation and verification
 
-The existing `app/` FastAPI backend and `web/` Next.js client are retained to avoid disrupting the existing checkout. `frontend/app.py` is the legacy Streamlit client; the authenticated Next.js client is the supported interface.
+The `app/` FastAPI backend and `web/` Next.js client power the authenticated research workspace.
 
 ## Implemented
 
@@ -16,7 +16,7 @@ The existing `app/` FastAPI backend and `web/` Next.js client are retained to av
 - Workspace document statistics and upload-date activity, dedicated summarization and comparison, similarity graph with pan/zoom/node dragging/search.
 - Persisted editable research reports with Markdown, paginated PDF and DOCX downloads. References preserve retrieved titles, available page numbers and excerpts.
 - Responsive sidebar, mobile document/source panels, keyboard search, theme persistence, reduced motion, loading and error states.
-- Docker frontend/backend services, CI checks, additive migration and environment examples.
+- CI checks, additive migrations and local/Vercel environment examples.
 - Persistent single-process document queue with recorded extraction/chunking/embedding/indexing stages, restart recovery, retry and real status polling.
 - Conversation renaming/deletion and empty-workspace deletion controls; all remain scoped to the current owner/workspace.
 - Nine summarization styles, three length budgets, up to ten selected documents, visible truncation disclosure and inspectable source passages.
@@ -42,11 +42,11 @@ This is a functional development implementation, not a verified production SaaS.
 - Document rename/reprocessing, empty-workspace deletion and session rename/deletion have UI controls. Workspaces with documents, reports or conversations cannot be deleted until emptied. User profile editing is not exposed.
 - In-memory rate limiting is per process. Multi-worker/distributed deployment needs Redis-backed limiting and coordinated job execution.
 - Existing legacy documents are never silently assigned to a registered user. Re-upload into an owned workspace, or use explicit `AUTH_REQUIRED=false` only on a trusted loopback server for legacy local access.
-- Live provider generation and deployment must be checked separately from mocked API tests. The frontend build, browser interaction tests, dependency audit and additive migration were verified locally. See the final verification report for exact results.
+- Live provider generation and deployment must be checked separately from mocked API tests. The frontend build, browser interaction tests, dependency audit and additive migration were verified locally. See the [Vercel deployment guide](VERCEL_DEPLOYMENT.md) for the successful live checks and remaining verification limits.
 
 ## Deployment boundary
 
-The Next.js frontend and Python service share one HTTPS origin. On Vercel, Services routes requests to the appropriate service and private storage preserves data across deployments. The Vercel entrypoint sets secure cookies and allowed deployment origins. For local/Docker hosting, use a same-origin proxy, configure `COOKIE_SECURE` and `CORS_ORIGINS`, and keep SQLite/Chroma files on a persistent volume. See [Vercel deployment](VERCEL_DEPLOYMENT.md) for the full cloud architecture.
+The Next.js frontend and Python service share one HTTPS origin. On Vercel, Services routes requests to the appropriate service and private storage preserves data across deployments. The Vercel entrypoint sets secure cookies and allowed deployment origins. Local development uses a same-origin proxy and stores SQLite/Chroma files under the ignored data directory. See [Vercel deployment](VERCEL_DEPLOYMENT.md) for the full cloud architecture.
 
 Provider compatibility reference: https://docs.ollama.com/api/openai-compatibility
 
