@@ -101,6 +101,15 @@ need smaller source files or a larger supported duration on the selected plan.
 
 ## Verification boundaries
 
+Voice assistant follow-up (15 November 2026): the production frontend build
+passed, and 19 browser scenarios passed across the full run and two targeted
+retries after correcting test alert selectors. The eight voice scenarios cover
+Hindi dictation and reviewed submission, spoken answers with citations, denied
+permissions, unsupported APIs, chunked playback/stop, muting during a pending
+reply, failed-generation silence, question limits, navigation cleanup, saved
+preferences and mobile layout. Browser speech APIs are simulated in these checks;
+real microphone recognition and audible device playback remain unverified.
+
 Local verification on 15 November 2026:
 
 - The non-integration backend suite passed after repository cleanup: 108 tests,

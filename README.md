@@ -19,6 +19,7 @@ Screenshots show the implemented interface with an isolated empty test workspace
 - Background uploads with database-recorded processing stages and retry: Vercel Queues in the cloud, or the built-in single-process worker locally.
 - Vector retrieval with keyword rescoring, optional cross-encoder reranking, bounded context and conversation memory.
 - Actual OpenAI-compatible/Ollama token streaming through SSE. Explicit provider failures, never demo answers.
+- Hindi/English voice questions, optional spoken replies, and answer playback with stop/replay controls in supported browsers.
 - Quick, deep, compare, beginner, critical and summary chat modes that change backend instructions and retrieval behavior.
 - Source passage cards, original PDF page navigation, conversation resume, copying, stopping, regeneration and Markdown conversation export.
 - Dedicated summary and comparison screens, document similarity graph, upload analytics and editable stored reports.
@@ -28,6 +29,27 @@ Screenshots show the implemented interface with an isolated empty test workspace
 - Responsive layouts, mobile research panels, keyboard search, dark/light themes and reduced-motion support.
 
 The complete list of architectural choices and unfinished capabilities is in [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md). In particular, OCR, password recovery, full bibliographic validation and exhaustive literature synthesis are not implemented. Citation labels and source provenance are checked; factual correctness still needs human review. See the [deployment guide](docs/VERCEL_DEPLOYMENT.md) for the live checks and remaining verification limits.
+
+## Voice assistant
+
+1. Open the research workspace, select **Voice language**, then click the microphone
+   (**Voice question**) and allow microphone access when your browser asks.
+2. Stop the microphone, review or edit the transcript, then send your question.
+   Voice input never submits a question automatically.
+3. Starting a voice question enables **Spoken replies**. Switch it off to mute
+   automatic playback. Completed answers are spoken; failed or stopped responses
+   are not automatically read.
+4. Use **Read aloud** beside an answer to play it again, or **Stop audio** to stop.
+   Escape also stops voice activity, and leaving the workspace releases the mic.
+
+Voice uses browser speech recognition and speech synthesis; no additional app API
+key is required. Browser support, microphone permission and installed voices vary.
+The browser's recognition service may process audio online. ResearchMind receives
+the reviewed question text only when you send it; it does not upload or store
+microphone audio. Typing remains available when voice input is unsupported.
+See [speech recognition](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition)
+and [speech synthesis](https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesis)
+for browser support details.
 
 ## Stack and architecture
 

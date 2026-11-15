@@ -1,0 +1,31 @@
+.voice-controls { margin-bottom: 10px; min-width: 0; }
+.voice-controls-row { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.voice-controls-row button, .voice-controls-row select {
+  min-height: 34px; border: 1px solid var(--border-subtle); border-radius: 8px;
+  background: var(--bg-surface); padding: 7px 10px; color: var(--text-secondary);
+  font-size: 10px; line-height: 1.3;
+}
+.voice-controls-row button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.voice-controls-row button:hover:not(:disabled) { background: var(--bg-elevated); border-color: #819ae766; }
+.voice-controls-row select { max-width: 145px; }
+.voice-controls-row .is-enabled { color: #a8bfff; background: #718fe514; border-color: #849eeb55; }
+.voice-controls-row .is-listening { color: #ffc3cb; border-color: #e78a9b77; background: #d66c7e16; }
+.voice-controls-row .voice-stop { color: #c3cfff; }
+.voice-status, .voice-privacy { margin-top: 6px; font-size: 9px; line-height: 1.5; color: var(--text-tertiary); }
+.voice-privacy { margin-top: 3px; }
+.voice-controls .error-box { margin-top: 8px; }
+.message-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.message-byline .message-actions button { margin-left: 0; }
+.message-actions .answer-audio { display: inline-flex; gap: 5px; align-items: center; font-size: 9px; letter-spacing: 0; color: var(--text-secondary); }
+.message-actions .answer-audio[aria-pressed=true] { color: #a8bfff; }
+.research-composer textarea[readonly] { color: var(--text-secondary); }
+html[data-theme=light] .voice-controls-row .is-enabled { color: #425ba4; }
+html[data-theme=light] .voice-controls-row .is-listening { color: #9b354b; }
+html[data-theme=light] .voice-controls-row .voice-stop, html[data-theme=light] .message-actions .answer-audio[aria-pressed=true] { color: #425ba4; }
+@media (max-width: 700px) {
+  .voice-controls-row { gap: 6px; }
+  .voice-controls-row button, .voice-controls-row select { padding: 8px; min-height: 36px; }
+  .voice-controls-row .voice-mic span { display: none; }
+  .voice-controls-row select { max-width: 122px; }
+  .voice-status, .voice-privacy { font-size: 8px; }
+}

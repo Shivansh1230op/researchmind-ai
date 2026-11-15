@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "@/styles/researchmind.css";
 import "@/styles/premium.css";
+import "@/styles/voice.css";
 import MotionProvider from "@/components/MotionProvider";
 
 const inter = Inter({
